@@ -24,8 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
       - name: "Instalar dependências"
         run: npm ci
+
       - name: "Executar testes"
         run: npm run tests
 
@@ -35,14 +37,12 @@ jobs:
           COVERAGE=$(npx nyc report --reporter=text-summary | grep -oP 'Statements\s*:\s*\K[0-9\.]+(?=%)' | head -1)
           echo "Coverage: $COVERAGE%"
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
-      - name: "Validar cobertura mínima"
+      
+      - name: "Valida se os testes passaram"
+        if: ${{ steps.coverage.outputs.coverage < env.COVERAGE_MIN }}
         run: |
-          if (( $(echo "$COVERAGE < ${{ env.COVERAGE_MIN }}" | bc -l) )); then
-            echo "Cobertura insuficiente: $COVERAGE%. Mínimo exigido: ${{ env.COVERAGE_MIN }}%."
-            exit 1
-          else
-            echo "Cobertura válida: $COVERAGE%. Atingido: ${{ steps.coverage.outputs.coverage }}%."
-          fi
+          echo "Cobertura mínima não atendida: Esperado - ${{ env.COVERAGE_MIN }}%. Atingido: ${{ steps.coverage.outputs.coverage }}%"
+          exit 1
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
       name: "Desafio Nível 2 - Certificado"
